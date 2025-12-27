@@ -1,0 +1,11 @@
+[project]
+name = "subtitleaitranslate"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "argparse>=1.4.0",
+    "configparser>=7.2.0",
+    "tqdm>=4.67.1",
+]
