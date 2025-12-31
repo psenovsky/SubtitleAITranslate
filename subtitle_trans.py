@@ -41,7 +41,7 @@ def translate_subtitles(subtitles, language_from, language_to, config):
 
         # Prepare the prompt for LM‑Studio
         prompt = (
-            f"Translate the following subtitle from {language_from} to {language_to}:\n\n"
+            f"Translate the following subtitle from {language_from} to {language_to}. In translation do not use quotation marks if they are not present in the original text. Return translated text only. Subtitle:\n\n"
             f"{original_text}"
         )
 
