@@ -46,7 +46,7 @@ def translate_subtitles(subtitles, language_from, language_to, config):
         )
 
         payload = {
-            "model": "openai/gpt-oss-20b",
+            "model": config["AI"]["model"],
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 500,
             "temperature": 0.3,
