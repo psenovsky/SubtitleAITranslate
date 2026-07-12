@@ -47,20 +47,15 @@ def translate_subtitles(subtitles, language_from, language_to, config):
         original_text = "\n".join(text_lines)
 
         # Prepare the prompt for LM‑Studio
-        system_message = (
-            "You are a professional subtitle translator. Your task is to translate subtitle text while preserving all formatting. "
-            "Rules:\n"
-            "1. Preserve ALL HTML tags exactly as they appear (e.g., <i>, </i>, <b>, </b>, <font>, etc.). "
-            "Translate only the text content between tags, never modify the tags themselves.\n"
-            "2. Preserve escape sequences exactly as they appear (e.g., \\n, \\t). Do not convert them to actual characters.\n"
-            "3. Do not add quotation marks in the translation unless they are present in the original text.\n"
-            "4. Return ONLY the translated text, nothing else. No explanations, no quotes around the result.\n"
-            "5. Maintain the same number of lines as the original text."
-        )
+        system_message = """You are a professional subtitle translator. Your task is to translate subtitle text while preserving all formatting.
+Rules:
+1. Preserve ALL HTML tags exactly as they appear (e.g., <i>, </i>, <b>, </b>, <font>, etc.). Translate only the text content between tags, never modify the tags themselves.
+2. Preserve escape sequences exactly as they appear (e.g., \\n, \\t). Do not convert them to actual characters.
+3. Do not add quotation marks in the translation unless they are present in the original text.
+4. Return ONLY the translated text, nothing else. No explanations, no quotes around the result.
+5. Maintain the same number of lines as the original text."""
 
-        user_message = (
-            f"Translate from {language_from} to {language_to}:\n\n{original_text}"
-        )
+        user_message = f"Translate from {language_from} to {language_to}:\n\n{original_text}"
 
         payload = {
             "model": config["AI"]["model"],
