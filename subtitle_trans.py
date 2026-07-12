@@ -64,7 +64,7 @@ Rules:
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": user_message}
             ],
-            "max_tokens": 5000,
+            "max_tokens": int(config["AI"]["max_tokens"]),
             "temperature": 0.3,
         }
 
