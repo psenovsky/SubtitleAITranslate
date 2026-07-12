@@ -1,4 +1,3 @@
-import configparser
 import os
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
@@ -15,6 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from gui.config_form import ConfigForm
 from subtitle_trans import translate_subtitles
 
 
@@ -43,15 +43,18 @@ class TranslateWorker(QThread):
 
 
 class TranslateForm(QMainWindow):
-    def __init__(self, config):
+    def __init__(self, config, config_path):
         super().__init__()
         self.config = config
+        self.config_path = config_path
         self.worker = None
         self._init_ui()
 
     def _init_ui(self):
         self.setWindowTitle("Subtitle AI Translate")
         self.setMinimumSize(500, 220)
+
+        self._init_menu()
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -104,6 +107,22 @@ class TranslateForm(QMainWindow):
         self.status_label = QLabel("")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.status_label)
+
+    def _init_menu(self):
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu("File")
+
+        settings_action = file_menu.addAction("Settings...")
+        settings_action.triggered.connect(self._on_settings)
+
+        file_menu.addSeparator()
+
+        exit_action = file_menu.addAction("Exit")
+        exit_action.triggered.connect(self.close)
+
+    def _on_settings(self):
+        dialog = ConfigForm(self.config, self.config_path, parent=self)
+        dialog.exec()
 
     def _browse_source(self):
         path, _ = QFileDialog.getOpenFileName(

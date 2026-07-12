@@ -13,6 +13,6 @@ def main():
     config.read(config_path)
 
     app = QApplication(sys.argv)
-    window = TranslateForm(config)
+    window = TranslateForm(config, config_path)
     window.show()
     sys.exit(app.exec())

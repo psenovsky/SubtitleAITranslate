@@ -29,6 +29,8 @@ The configuration directives are:
 - `max_tokens` — maximum number of tokens in the AI response
 - `version` — informational, version of the app used in the CLI help output
 
+Alternatively you can use the GUI to configure the app.
+
 ## Usage
 
 ### Command line
