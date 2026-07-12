@@ -24,6 +24,7 @@ def translate_subtitles(subtitles, language_from, language_to, config):
     blocks = re.split(r"\n\s*\n", subtitles.strip())
     translated_blocks = []
     stats = {"total": len(blocks), "translated": 0, "skipped": 0, "empty": 0, "errors": 0}
+    tokens = {"prompt": 0, "completion": 0, "total": 0}
     warnings = []
 
     ip = config["AI"]["host"]
@@ -108,6 +109,12 @@ Rules:
         if translated_text is not None:
             translated_text = translated_text.strip()
 
+            # Accumulate token usage
+            if usage:
+                tokens["prompt"] += usage.get("prompt_tokens", 0)
+                tokens["completion"] += usage.get("completion_tokens", 0)
+                tokens["total"] += usage.get("total_tokens", 0)
+
             # Check for empty response
             if not translated_text:
                 detail = f"finish_reason={finish_reason}"
@@ -139,5 +146,6 @@ Rules:
         for w in warnings:
             print(w)
     print(f"\nTranslation complete: {stats['translated']} translated, {stats['empty']} empty (kept original), {stats['skipped']} skipped, {stats['errors']} errors")
+    print(f"Token usage: {tokens['total']} total ({tokens['prompt']} prompt + {tokens['completion']} completion)")
 
     return "\n\n".join(translated_blocks)
