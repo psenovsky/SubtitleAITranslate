@@ -2,11 +2,11 @@
 
 ## About
 
-Simple command line utility to quick and dirty automatictranslation of the subtitles using local AI such as OpenAI GPT-OSS using Ollama or LM-Studio.
+Simple command line utility (and GUI) for quick and dirty automatic translation of subtitles using local AI such as OpenAI GPT-OSS using Ollama or LM-Studio.
 
-Please note that the AI is supposed to run localy, which means that the app does not implement any kind of authentication or authorization. In other words use with caution.
+Please note that the AI is supposed to run locally, which means that the app does not implement any kind of authentication or authorization. In other words, use with caution.
 
-## Confguration
+## Configuration
 
 The app is configured using a simple ini file. The file is located in the same folder as the executable. The file name is `config.ini`. The default configuration is as follows:
 
@@ -14,14 +14,24 @@ The app is configured using a simple ini file. The file is located in the same f
 [AI]
 host = 127.0.0.1
 port = 1234
+model = deepreinforce-ai/Orinth-1.0-9b
+max_tokens = 5000
 
 [general]
-version = 0.0.1
+version = 0.0.2
 ```
 
-The `host` and `port` fields are used to specify the address and port of the AI server. The AI server is expected to run on the same machine as the app. Version configuration directive is used only for informational purposes.
+The configuration directives are:
+
+- `host` — address of the AI server (expected to run locally)
+- `port` — port of the AI server
+- `model` — the LLM model name to use for translation
+- `max_tokens` — maximum number of tokens in the AI response
+- `version` — informational, version of the app used in the CLI help output
 
 ## Usage
+
+### Command line
 
 ```
 usage: translate.py [-h] [-f PATH] [-t TARGET_LANGUAGE] [-s SOURCE_LANGUAGE] [-o OUTPUT_FILE]
@@ -29,13 +39,30 @@ usage: translate.py [-h] [-f PATH] [-t TARGET_LANGUAGE] [-s SOURCE_LANGUAGE] [-o
 optional arguments:
   -h, --help                show this help message and exit
   -f, --subFile PATH        path to subtitle file in SRT format
-  -t, --subTarget TARGET_LANGUAGE, target language of the subtitle file (default english)
-  -s, --subSource SOURCE_LANGUAGE, source language of the subtitle file (default czech)
+  -t, --subTarget TARGET_LANGUAGE, target language of the subtitle file (default czech)
+  -s, --subSource SOURCE_LANGUAGE, source language of the subtitle file (default english)
   -o, --outFile PATH        path to output file in SRT format (default translated.srt)
 ```
 
-### Example
+#### Example
 
 ```
 uv run translate.py -f subtitles.srt -t czech -s english -o output.srt
 ```
+
+### GUI
+
+A graphical interface is also available. Launch it with:
+
+```
+uv run python run_gui.py
+```
+
+The GUI provides a form where you can:
+
+- Browse and select the source subtitle file (`.srt`)
+- Browse and select the target file path
+- Set source and target languages (prefilled with English and Czech)
+- Click **GO** to start the translation
+
+The translation runs in the background so the window stays responsive. A status message at the bottom indicates progress and completion.
