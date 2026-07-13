@@ -15,7 +15,9 @@ The app is configured using a simple ini file. The file is located in the same f
 host = 127.0.0.1
 port = 1234
 model = deepreinforce-ai/Orinth-1.0-9b
-max_tokens = 5000
+max_tokens = 200000
+min_batch_size = 3
+max_batch_size = 30
 
 [general]
 version = 0.0.2
@@ -27,9 +29,13 @@ The configuration directives are:
 - `port` — port of the AI server
 - `model` — the LLM model name to use for translation
 - `max_tokens` — maximum number of tokens in the AI response
+- `min_batch_size` — minimum number of subtitles in a batch; if a batch is smaller, it is merged with the previous one
+- `max_batch_size` — maximum number of subtitles per batch sent to the AI server in one request
 - `version` — informational, version of the app used in the CLI help output
 
 Alternatively you can use the GUI to configure the app.
+
+Be aware that `max_tokens` depends on the model you are using and may need to be adjusted. Some models are more talkative than others and use more tokens to perform the translation. You may also need to adjust the batch size parameters (`min_batch_size` and `max_batch_size`) depending on the model used and available resources.
 
 ## Usage
 

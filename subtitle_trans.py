@@ -62,13 +62,13 @@ def query_max_tokens(config) -> int:
     return configured_max
 
 
-def batch_subtitles(subtitles: list[Subtitle], max_tokens: int) -> list[list[Subtitle]]:
+def batch_subtitles(subtitles: list[Subtitle], max_tokens: int, config: dict) -> list[list[Subtitle]]:
     available_tokens = max_tokens - 500
     batches = []
     current_batch = []
     current_tokens = 0
-    min_batch_size = 3
-    max_batch_size = 50
+    min_batch_size = int(config["AI"]["min_batch_size"])
+    max_batch_size = int(config["AI"]["max_batch_size"])
 
     for sub in subtitles:
         sub_tokens = estimate_tokens(sub.text)
@@ -89,16 +89,19 @@ def batch_subtitles(subtitles: list[Subtitle], max_tokens: int) -> list[list[Sub
 
 
 def _build_batch_prompt(batch: list[Subtitle], language_from: str, language_to: str) -> str:
-    parts = [
-        f"Translate these subtitles from {language_from} to {language_to}.",
-        "Each subtitle has a number in brackets, timestamps, and text.",
-        "Return translations in the EXACT same format with the same numbers.",
-        "Preserve all HTML tags (e.g., <i>, </i>) and escape sequences (e.g., \\n).",
-        "Return ONLY the translations, no explanations.\n",
-    ]
-    for sub in batch:
-        parts.append(f"[{sub.id}]\n{sub.timestamps}\n{sub.text}\n")
-    return "\n".join(parts)
+    header = f"""\
+Translate these subtitles from {language_from} to {language_to}.
+Each subtitle has a number in brackets, timestamps, and text.
+Return translations in the EXACT same format with the same numbers.
+Preserve all HTML tags (e.g., <i>, </i>) and escape sequences (e.g., \\n).
+Return ONLY the translations, no explanations."""
+
+    blocks = "\n\n".join(
+        f"[{sub.id}]\n{sub.timestamps}\n{sub.text}"
+        for sub in batch
+    )
+
+    return header + "\n\n" + blocks
 
 
 SYSTEM_MESSAGE = """You are a professional subtitle translator. Your task is to translate subtitle text while preserving all formatting.
@@ -212,7 +215,7 @@ def translate_subtitles(subtitles, language_from, language_to, config):
         return subtitles
 
     max_tokens = query_max_tokens(config)
-    batches = batch_subtitles(all_subs, max_tokens)
+    batches = batch_subtitles(all_subs, max_tokens, config)
 
     result = []
     stats = {"total": len(all_subs), "translated": 0, "empty": 0, "errors": 0, "batches": len(batches)}
