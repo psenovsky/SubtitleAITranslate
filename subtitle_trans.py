@@ -90,30 +90,28 @@ def batch_subtitles(subtitles: list[Subtitle], max_tokens: int, config: dict) ->
 
 def _build_batch_prompt(batch: list[Subtitle], language_from: str, language_to: str) -> str:
     header = f"""\
-Translate these subtitles from {language_from} to {language_to}.
-Each subtitle has a number in brackets, timestamps, and text.
-Return translations in the EXACT same format with the same numbers.
+Translate each subtitle from {language_from} to {language_to}.
+Each subtitle is numbered followed by ">". Example: "1> Hello world."
+Return ONLY translations in the same format: number, ">", then translated text.
 Preserve all HTML tags (e.g., <i>, </i>) and escape sequences (e.g., \\n).
-Return ONLY the translations, no explanations."""
+No explanations, no timestamps."""
 
     blocks = "\n\n".join(
-        f"[{sub.id}]\n{sub.timestamps}\n{sub.text}"
+        f"{sub.id}> {sub.text}"
         for sub in batch
     )
 
     return header + "\n\n" + blocks
 
 
-SYSTEM_MESSAGE = """You are a professional subtitle translator. Your task is to translate subtitle text while preserving all formatting.
+SYSTEM_MESSAGE = """You are a professional subtitle translator. Translate subtitle text while preserving formatting.
 
 Rules:
 1. Preserve ALL HTML tags exactly as they appear (e.g., <i>, </i>, <b>, </b>, <font>, etc.). Translate only the text content between tags, never modify the tags themselves.
 2. Preserve escape sequences exactly as they appear (e.g., \\n, \\t). Do not convert them to actual characters.
 3. Do not add quotation marks in the translation unless they are present in the original text.
 4. Return ONLY the translated text, nothing else. No explanations, no quotes around the result.
-5. Maintain the same number of lines as the original text.
-6. Each subtitle block is numbered in brackets [N]. Preserve these numbers exactly in your response.
-7. Preserve timestamp lines exactly as they appear (e.g., 00:00:01,500 --> 00:00:04,200)."""
+5. Maintain the same number of lines as the original text."""
 
 
 def translate_batch(batch: list[Subtitle], language_from: str, language_to: str, config: dict) -> str | None:
@@ -149,8 +147,8 @@ def translate_batch(batch: list[Subtitle], language_from: str, language_to: str,
 
 
 def parse_batch_response(response_text: str, original_batch: list[Subtitle]) -> list[Subtitle] | None:
-    pattern = r"\[(\d+)\]\s*\n(\d{2}:\d{2}:\d{2},\d{3}\s*-->\s*\d{2}:\d{2}:\d{2},\d{3})\s*\n(.+?)(?=\n\[\d+\]|\Z)"
-    matches = re.findall(pattern, response_text, re.DOTALL)
+    pattern = r"^(\d+)>\s*(.+?)(?=\n\d+>|\Z)"
+    matches = re.findall(pattern, response_text, re.DOTALL | re.MULTILINE)
 
     if not matches:
         return None
@@ -158,19 +156,17 @@ def parse_batch_response(response_text: str, original_batch: list[Subtitle]) -> 
     translated_map = {}
     for match in matches:
         sub_id = int(match[0])
-        timestamps = match[1].strip()
-        text = match[2].strip()
-        translated_map[sub_id] = Subtitle(id=sub_id, timestamps=timestamps, text=text)
+        text = match[1].strip()
+        translated_map[sub_id] = text
 
     result = []
     for original in original_batch:
         if original.id not in translated_map:
             return None
-        translated = translated_map[original.id]
         result.append(Subtitle(
             id=original.id,
             timestamps=original.timestamps,
-            text=translated.text,
+            text=translated_map[original.id],
         ))
 
     return result
