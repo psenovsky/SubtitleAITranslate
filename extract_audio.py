@@ -2,6 +2,7 @@ import argparse
 import configparser
 import os
 
+import config_helper
 from audio_extract import (
     check_ffmpeg,
     display_audio_streams,
@@ -14,6 +15,9 @@ from audio_extract import (
 def main():
     config = configparser.ConfigParser()
     config.read("config.ini")
+    config_helper.migrate_old_config(config)
+    config_helper.ensure_general_section(config)
+    config_helper.ensure_active_model(config)
     description = (
         f"Version: {config['general']['version']}\n"
         "Extract audio streams from video files."

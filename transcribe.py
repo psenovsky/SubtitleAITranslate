@@ -2,6 +2,7 @@ import argparse
 import configparser
 import os
 
+import config_helper
 from whisper_transcribe import (
     load_iso639_data,
     load_whisper_support,
@@ -15,6 +16,9 @@ from whisper_transcribe import (
 def main():
     config = configparser.ConfigParser()
     config.read("config.ini")
+    config_helper.migrate_old_config(config)
+    config_helper.ensure_general_section(config)
+    config_helper.ensure_active_model(config)
     description = (
         f"Version: {config['general']['version']}\n"
         "Transcribe audio files using Whisper."

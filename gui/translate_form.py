@@ -23,12 +23,13 @@ class TranslateWorker(QThread):
     finished = pyqtSignal(str)
     error = pyqtSignal(str)
 
-    def __init__(self, subtitles, language_from, language_to, config):
+    def __init__(self, subtitles, language_from, language_to, config, model_name=None):
         super().__init__()
         self.subtitles = subtitles
         self.language_from = language_from
         self.language_to = language_to
         self.config = config
+        self.model_name = model_name
 
     def run(self):
         try:
@@ -37,6 +38,7 @@ class TranslateWorker(QThread):
                 language_from=self.language_from,
                 language_to=self.language_to,
                 config=self.config,
+                model_name=self.model_name,
             )
             self.finished.emit(result)
         except Exception as e:
@@ -188,7 +190,7 @@ class TranslateForm(QMainWindow):
         self.status_label.setText("Translating...")
         self.status_label.setStyleSheet("color: gray;")
 
-        self.worker = TranslateWorker(subtitles, source_lang, target_lang, self.config)
+        self.worker = TranslateWorker(subtitles, source_lang, target_lang, self.config, model_name=None)
         self.worker.finished.connect(lambda result: self._on_translation_done(target_path, result))
         self.worker.error.connect(self._on_translation_error)
         self.worker.start()

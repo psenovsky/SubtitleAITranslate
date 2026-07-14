@@ -6,6 +6,8 @@ from dataclasses import dataclass
 
 from tqdm import tqdm
 
+import config_helper
+
 
 @dataclass
 class Subtitle:
@@ -43,11 +45,12 @@ def estimate_tokens(text: str) -> int:
     return len(text) // 4 + 1
 
 
-def query_max_tokens(config) -> int:
-    ip = config["AI"]["host"]
-    port = config["AI"]["port"]
+def query_max_tokens(config, model_name=None) -> int:
+    model_cfg = config_helper.get_model_config(config, model_name)
+    ip = model_cfg["host"]
+    port = model_cfg["port"]
     url = f"http://{ip}:{port}/v1/models"
-    configured_max = int(config["AI"]["max_tokens"])
+    configured_max = int(model_cfg["max_tokens"])
     try:
         req = urllib.request.Request(url, headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=5) as response:
@@ -62,13 +65,14 @@ def query_max_tokens(config) -> int:
     return configured_max
 
 
-def batch_subtitles(subtitles: list[Subtitle], max_tokens: int, config: dict) -> list[list[Subtitle]]:
+def batch_subtitles(subtitles: list[Subtitle], max_tokens: int, config, model_name=None) -> list[list[Subtitle]]:
+    model_cfg = config_helper.get_model_config(config, model_name)
     available_tokens = max_tokens - 500
     batches = []
     current_batch = []
     current_tokens = 0
-    min_batch_size = int(config["AI"]["min_batch_size"])
-    max_batch_size = int(config["AI"]["max_batch_size"])
+    min_batch_size = int(model_cfg["min_batch_size"])
+    max_batch_size = int(model_cfg["max_batch_size"])
 
     for sub in subtitles:
         sub_tokens = estimate_tokens(sub.text)
@@ -114,20 +118,21 @@ Rules:
 5. Maintain the same number of lines as the original text."""
 
 
-def translate_batch(batch: list[Subtitle], language_from: str, language_to: str, config: dict) -> str | None:
-    ip = config["AI"]["host"]
-    port = config["AI"]["port"]
+def translate_batch(batch: list[Subtitle], language_from: str, language_to: str, config, model_name=None) -> str | None:
+    model_cfg = config_helper.get_model_config(config, model_name)
+    ip = model_cfg["host"]
+    port = model_cfg["port"]
     url = f"http://{ip}:{port}/v1/chat/completions"
 
     user_message = _build_batch_prompt(batch, language_from, language_to)
 
     payload = {
-        "model": config["AI"]["model"],
+        "model": model_cfg["model"],
         "messages": [
             {"role": "system", "content": SYSTEM_MESSAGE},
             {"role": "user", "content": user_message},
         ],
-        "max_tokens": int(config["AI"]["max_tokens"]),
+        "max_tokens": int(model_cfg["max_tokens"]),
         "temperature": 0.3,
     }
 
@@ -172,20 +177,21 @@ def parse_batch_response(response_text: str, original_batch: list[Subtitle]) -> 
     return result
 
 
-def translate_single(sub: Subtitle, language_from: str, language_to: str, config: dict) -> Subtitle:
-    ip = config["AI"]["host"]
-    port = config["AI"]["port"]
+def translate_single(sub: Subtitle, language_from: str, language_to: str, config, model_name=None) -> Subtitle:
+    model_cfg = config_helper.get_model_config(config, model_name)
+    ip = model_cfg["host"]
+    port = model_cfg["port"]
     url = f"http://{ip}:{port}/v1/chat/completions"
 
     user_message = f"Translate from {language_from} to {language_to}:\n\n{sub.text}"
 
     payload = {
-        "model": config["AI"]["model"],
+        "model": model_cfg["model"],
         "messages": [
             {"role": "system", "content": SYSTEM_MESSAGE},
             {"role": "user", "content": user_message},
         ],
-        "max_tokens": int(config["AI"]["max_tokens"]),
+        "max_tokens": int(model_cfg["max_tokens"]),
         "temperature": 0.3,
     }
 
@@ -205,13 +211,13 @@ def translate_single(sub: Subtitle, language_from: str, language_to: str, config
     return sub
 
 
-def translate_subtitles(subtitles, language_from, language_to, config):
+def translate_subtitles(subtitles, language_from, language_to, config, model_name=None):
     all_subs = parse_srt(subtitles)
     if not all_subs:
         return subtitles
 
-    max_tokens = query_max_tokens(config)
-    batches = batch_subtitles(all_subs, max_tokens, config)
+    max_tokens = query_max_tokens(config, model_name)
+    batches = batch_subtitles(all_subs, max_tokens, config, model_name)
 
     result = []
     stats = {"total": len(all_subs), "translated": 0, "empty": 0, "errors": 0, "batches": len(batches)}
@@ -221,7 +227,7 @@ def translate_subtitles(subtitles, language_from, language_to, config):
     pbar = tqdm(total=len(all_subs), desc="Translating subtitles", unit="sub")
 
     for batch_idx, batch in enumerate(batches, 1):
-        response_text = translate_batch(batch, language_from, language_to, config)
+        response_text = translate_batch(batch, language_from, language_to, config, model_name)
 
         if response_text is not None:
             translated_batch = parse_batch_response(response_text, batch)
@@ -240,7 +246,7 @@ def translate_subtitles(subtitles, language_from, language_to, config):
         else:
             warnings.append(f"⚠ Batch {batch_idx} failed, falling back to individual translation")
             for sub in batch:
-                translated = translate_single(sub, language_from, language_to, config)
+                translated = translate_single(sub, language_from, language_to, config, model_name)
                 if translated.text and translated.text != sub.text:
                     stats["translated"] += 1
                 else:
