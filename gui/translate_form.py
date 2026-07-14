@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from gui.audio_subtitle_form import AudioSubtitleForm
 from gui.config_form import ConfigForm
 from subtitle_trans import translate_subtitles
 
@@ -48,6 +49,7 @@ class TranslateForm(QMainWindow):
         self.config = config
         self.config_path = config_path
         self.worker = None
+        self.audio_window = None
         self._init_ui()
 
     def _init_ui(self):
@@ -120,9 +122,21 @@ class TranslateForm(QMainWindow):
         exit_action = file_menu.addAction("Exit")
         exit_action.triggered.connect(self.close)
 
+        tools_menu = menu_bar.addMenu("Tools")
+
+        audio_action = tools_menu.addAction("Audio Extract && Subtitle Creator...")
+        audio_action.triggered.connect(self._on_audio_subtitle)
+
     def _on_settings(self):
         dialog = ConfigForm(self.config, self.config_path, parent=self)
         dialog.exec()
+
+    def _on_audio_subtitle(self):
+        if self.audio_window is None:
+            self.audio_window = AudioSubtitleForm()
+        self.audio_window.show()
+        self.audio_window.raise_()
+        self.audio_window.activateWindow()
 
     def _browse_source(self):
         path, _ = QFileDialog.getOpenFileName(
