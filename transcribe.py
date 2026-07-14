@@ -7,7 +7,8 @@ from whisper_transcribe import (
     load_whisper_support,
     validate_audio_filename,
     transcribe_audio,
-    save_transcription,
+    segments_to_srt,
+    save_srt,
 )
 
 
@@ -60,18 +61,21 @@ def main():
     print(f"  Language: {language_name}")
 
     try:
-        text = transcribe_audio(args.file, language_name)
+        segments = transcribe_audio(args.file, language_name)
     except Exception as e:
         print(f"Error during transcription: {e}")
         exit(1)
 
-    output_path = os.path.splitext(args.file)[0] + ".txt"
-    print(f"\nSaving transcription to: {output_path}")
+    print(f"  Generated {len(segments)} subtitle segments")
 
-    if save_transcription(text, output_path):
+    srt_content = segments_to_srt(segments)
+    output_path = os.path.splitext(args.file)[0] + ".srt"
+    print(f"\nSaving SRT file to: {output_path}")
+
+    if save_srt(srt_content, output_path):
         print("Done.")
     else:
-        print("Failed to save transcription.")
+        print("Failed to save SRT file.")
         exit(1)
 
 

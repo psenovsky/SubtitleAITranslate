@@ -127,4 +127,45 @@ Extracted audio is saved as WAV files (PCM 16-bit, 16kHz, mono) in the same dire
 video.mkv  -->  video.eng.wav
 ```
 
-These settings are optimized for use with Whisper-based speech recognition to be implemented at later time.
+These settings are optimized for use with Whisper-based speech recognition.
+
+## Audio Transcription
+
+Transcribes audio files to SRT subtitles using OpenAI Whisper. The language is automatically detected from the filename.
+
+### Requirements
+
+- `openai-whisper` package (installed via `uv sync`)
+
+### Usage
+
+```
+usage: transcribe.py [-h] -f FILE [-d DATA_DIR]
+
+options:
+  -h, --help            show this help message and exit
+  -f, --file FILE       audio file path (format: video.name.lang.wav)
+  -d, --data-dir        directory with language data files (default: data/)
+```
+
+### Input Format
+
+The audio filename must follow the pattern `<video_name>.<lang>.wav`, where `<lang>` is an ISO 639-2 language code (e.g., `eng` for English, `ces` for Czech).
+
+### Examples
+
+```
+uv run transcribe.py -f video.eng.wav
+```
+
+This produces `video.eng.srt` with timestamped subtitles.
+
+### Output
+
+The output is an SRT subtitle file with the same base name as the input audio, saved in the same directory. Example:
+
+```
+video.eng.wav  -->  video.eng.srt
+```
+
+The SRT file contains standard subtitle entries with index, timestamps, and transcribed text.

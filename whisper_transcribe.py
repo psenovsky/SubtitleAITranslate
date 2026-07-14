@@ -86,6 +86,15 @@ def validate_audio_filename(filename, iso639_data):
     return video_name, lang_code, code_639_1, language_name
 
 
+def format_timestamp(seconds):
+    """Convert seconds to SRT timestamp format: HH:MM:SS,mmm"""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+    millis = int((seconds % 1) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
+
+
 def transcribe_audio(audio_path, language_name):
     """Transcribe audio file using Whisper large model.
 
@@ -94,30 +103,51 @@ def transcribe_audio(audio_path, language_name):
         language_name: Language name (e.g., 'English') for Whisper
 
     Returns:
-        Transcribed text
+        List of segments, each with 'start', 'end', 'text' keys
     """
     import whisper
 
     model = whisper.load_model("large")
     result = model.transcribe(audio_path, language=language_name)
 
-    return result["text"]
+    return result["segments"]
 
 
-def save_transcription(text, output_path):
-    """Save transcription text to file.
+def segments_to_srt(segments):
+    """Convert Whisper segments to SRT format string.
 
     Args:
-        text: Transcribed text
-        output_path: Path to output .txt file
+        segments: List of dicts with 'start', 'end', 'text' keys
+
+    Returns:
+        SRT formatted string
+    """
+    lines = []
+    for i, seg in enumerate(segments, 1):
+        start = format_timestamp(seg["start"])
+        end = format_timestamp(seg["end"])
+        text = seg["text"].strip()
+        lines.append(f"{i}")
+        lines.append(f"{start} --> {end}")
+        lines.append(text)
+        lines.append("")
+    return "\n".join(lines)
+
+
+def save_srt(srt_content, output_path):
+    """Save SRT content to file.
+
+    Args:
+        srt_content: SRT formatted string
+        output_path: Path to output .srt file
 
     Returns:
         True on success, False on failure
     """
     try:
         with open(output_path, "w", encoding="utf-8") as f:
-            f.write(text)
+            f.write(srt_content)
         return True
     except Exception as e:
-        print(f"Error saving transcription: {e}")
+        print(f"Error saving SRT file: {e}")
         return False
