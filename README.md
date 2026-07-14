@@ -11,19 +11,25 @@ Please note that the AI is supposed to run locally, which means that the app doe
 The app is configured using a simple ini file. The file is located in the same folder as the executable. The file name is `config.ini`. The default configuration is as follows:
 
 ```
-[AI]
+[general]
+version = 0.0.2
+active_model = default
+
+[model.default]
 host = 127.0.0.1
 port = 1234
 model = deepreinforce-ai/Orinth-1.0-9b
 max_tokens = 200000
 min_batch_size = 3
 max_batch_size = 30
-
-[general]
-version = 0.0.2
 ```
 
-The configuration directives are:
+Each AI model is defined in its own section named `[model.<name>]`. The `[general]` section holds app-wide settings:
+
+- `version` — informational, version of the app used in the CLI help output
+- `active_model` — name of the model to use by default
+
+The configuration directives for each model section are:
 
 - `host` — address of the AI server (expected to run locally)
 - `port` — port of the AI server
@@ -31,9 +37,32 @@ The configuration directives are:
 - `max_tokens` — maximum number of tokens in the AI response
 - `min_batch_size` — minimum number of subtitles in a batch; if a batch is smaller, it is merged with the previous one
 - `max_batch_size` — maximum number of subtitles per batch sent to the AI server in one request
-- `version` — informational, version of the app used in the CLI help output
 
-Alternatively you can use the GUI to configure the app.
+You can configure multiple models and switch between them. For example:
+
+```
+[general]
+version = 0.0.2
+active_model = default
+
+[model.default]
+host = 127.0.0.1
+port = 1234
+model = deepreinforce-ai/Orinth-1.0-9b
+max_tokens = 200000
+min_batch_size = 3
+max_batch_size = 30
+
+[model.fast]
+host = 127.0.0.1
+port = 1234
+model = smaller-model
+max_tokens = 8192
+min_batch_size = 5
+max_batch_size = 50
+```
+
+Alternatively you can use the GUI to configure the app. The settings dialog allows you to add, remove, rename models and select the active one.
 
 Be aware that `max_tokens` depends on the model you are using and may need to be adjusted. Some models are more talkative than others and use more tokens to perform the translation. You may also need to adjust the batch size parameters (`min_batch_size` and `max_batch_size`) depending on the model used and available resources.
 
@@ -42,7 +71,7 @@ Be aware that `max_tokens` depends on the model you are using and may need to be
 ### Command line
 
 ```
-usage: translate.py [-h] [-f PATH] [-t TARGET_LANGUAGE] [-s SOURCE_LANGUAGE] [-o OUTPUT_FILE]
+usage: translate.py [-h] [-f PATH] [-t TARGET_LANGUAGE] [-s SOURCE_LANGUAGE] [-o OUTPUT_FILE] [-m MODEL]
 
 optional arguments:
   -h, --help                show this help message and exit
@@ -50,12 +79,19 @@ optional arguments:
   -t, --subTarget TARGET_LANGUAGE, target language of the subtitle file (default czech)
   -s, --subSource SOURCE_LANGUAGE, source language of the subtitle file (default english)
   -o, --outFile PATH        path to output file in SRT format (default translated.srt)
+  -m, --model MODEL         AI model name to use (default: active model from config)
 ```
 
 #### Example
 
 ```
 uv run translate.py -f subtitles.srt -t czech -s english -o output.srt
+```
+
+Using a specific model:
+
+```
+uv run translate.py -f subtitles.srt -t czech -s english -o output.srt -m fast
 ```
 
 ### GUI
@@ -74,6 +110,8 @@ The GUI provides a form where you can:
 - Click **GO** to start the translation
 
 The translation runs in the background so the window stays responsive. A status message at the bottom indicates progress and completion.
+
+The settings dialog (**File > Settings**) allows you to manage multiple AI models — add, remove, rename them, and select which one is active.
 
 ## Audio Extraction
 
