@@ -2,8 +2,8 @@ import argparse
 import configparser
 import os
 
-import config_helper
-from audio_extract import (
+import lib.config_helper as config_helper
+from lib.audio_extract import (
     check_ffmpeg,
     display_audio_streams,
     extract_audio,

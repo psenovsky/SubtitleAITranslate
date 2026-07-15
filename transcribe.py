@@ -2,8 +2,8 @@ import argparse
 import configparser
 import os
 
-import config_helper
-from whisper_transcribe import (
+import lib.config_helper as config_helper
+from lib.whisper_transcribe import (
     load_iso639_data,
     load_whisper_support,
     validate_audio_filename,

@@ -2,8 +2,8 @@ import argparse  # parses command line arguments
 import configparser  # reads configuration files
 import os  # file system operations
 
-import config_helper
-from subtitle_trans import translate_subtitles
+import lib.config_helper as config_helper
+from lib.subtitle_trans import translate_subtitles
 
 
 def main():

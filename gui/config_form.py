@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-import config_helper
+import lib.config_helper as config_helper
 
 
 class ConfigForm(QDialog):

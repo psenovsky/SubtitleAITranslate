@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from tqdm import tqdm
 
-import config_helper
+from . import config_helper
 
 
 @dataclass

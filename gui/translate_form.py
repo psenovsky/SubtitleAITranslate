@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 
 from gui.audio_subtitle_form import AudioSubtitleForm
 from gui.config_form import ConfigForm
-from subtitle_trans import translate_subtitles
+from lib.subtitle_trans import translate_subtitles
 
 
 class TranslateWorker(QThread):

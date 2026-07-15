@@ -19,8 +19,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from audio_extract import check_ffmpeg, extract_audio, generate_output_path, get_audio_streams
-from whisper_transcribe import (
+from lib.audio_extract import check_ffmpeg, extract_audio, generate_output_path, get_audio_streams
+from lib.whisper_transcribe import (
     load_iso639_data,
     load_whisper_support,
     segments_to_srt,

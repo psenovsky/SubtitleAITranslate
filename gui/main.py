@@ -4,7 +4,7 @@ import sys
 
 from PyQt6.QtWidgets import QApplication
 
-import config_helper
+import lib.config_helper as config_helper
 from gui.translate_form import TranslateForm
 
 
