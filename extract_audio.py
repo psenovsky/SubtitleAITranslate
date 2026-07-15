@@ -13,6 +13,7 @@ from audio_extract import (
 
 
 def main():
+    """CLI entry point for extracting audio streams from video files."""
     config = configparser.ConfigParser()
     config.read("config.ini")
     config_helper.migrate_old_config(config)

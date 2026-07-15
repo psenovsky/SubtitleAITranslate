@@ -7,6 +7,7 @@ from subtitle_trans import translate_subtitles
 
 
 def main():
+    """CLI entry point for translating subtitle files using a local LLM."""
     config = configparser.ConfigParser()
     config.read("config.ini")
     config_helper.migrate_old_config(config)

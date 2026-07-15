@@ -24,6 +24,15 @@ class TranslateWorker(QThread):
     error = pyqtSignal(str)
 
     def __init__(self, subtitles, language_from, language_to, config, model_name=None):
+        """Initialize the translation worker thread.
+
+        Args:
+            subtitles: Raw SRT content to translate.
+            language_from: Source language name.
+            language_to: Target language name.
+            config: Parsed configuration file.
+            model_name: Optional model name override.
+        """
         super().__init__()
         self.subtitles = subtitles
         self.language_from = language_from
@@ -32,6 +41,7 @@ class TranslateWorker(QThread):
         self.model_name = model_name
 
     def run(self):
+        """Run the translation and emit finished or error signal."""
         try:
             result = translate_subtitles(
                 subtitles=self.subtitles,
@@ -47,6 +57,12 @@ class TranslateWorker(QThread):
 
 class TranslateForm(QMainWindow):
     def __init__(self, config, config_path):
+        """Initialize the main translation window.
+
+        Args:
+            config: Parsed configuration file.
+            config_path: Path to the configuration file on disk.
+        """
         super().__init__()
         self.config = config
         self.config_path = config_path
@@ -55,6 +71,7 @@ class TranslateForm(QMainWindow):
         self._init_ui()
 
     def _init_ui(self):
+        """Build the main translation form layout."""
         self.setWindowTitle("Subtitle AI Translate")
         self.setMinimumSize(500, 220)
 
@@ -113,6 +130,7 @@ class TranslateForm(QMainWindow):
         layout.addWidget(self.status_label)
 
     def _init_menu(self):
+        """Create the menu bar with File and Tools menus."""
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu("File")
 
@@ -130,10 +148,12 @@ class TranslateForm(QMainWindow):
         audio_action.triggered.connect(self._on_audio_subtitle)
 
     def _on_settings(self):
+        """Open the settings dialog."""
         dialog = ConfigForm(self.config, self.config_path, parent=self)
         dialog.exec()
 
     def _on_audio_subtitle(self):
+        """Open or raise the audio extraction and subtitle creation window."""
         if self.audio_window is None:
             self.audio_window = AudioSubtitleForm()
         self.audio_window.show()
@@ -141,6 +161,7 @@ class TranslateForm(QMainWindow):
         self.audio_window.activateWindow()
 
     def _browse_source(self):
+        """Open a file dialog to select the source SRT file."""
         path, _ = QFileDialog.getOpenFileName(
             self, "Select Source Subtitle File", "", "SRT Files (*.srt);;All Files (*)"
         )
@@ -148,6 +169,7 @@ class TranslateForm(QMainWindow):
             self.source_edit.setText(path)
 
     def _browse_target(self):
+        """Open a save file dialog to select the target SRT file path."""
         path, _ = QFileDialog.getSaveFileName(
             self, "Select Target File", "", "SRT Files (*.srt);;All Files (*)"
         )
@@ -155,6 +177,7 @@ class TranslateForm(QMainWindow):
             self.target_edit.setText(path)
 
     def _on_go(self):
+        """Validate inputs and start the translation worker thread."""
         source_path = self.source_edit.text().strip()
         target_path = self.target_edit.text().strip()
         source_lang = self.source_lang_edit.text().strip()
@@ -196,6 +219,12 @@ class TranslateForm(QMainWindow):
         self.worker.start()
 
     def _on_translation_done(self, target_path, result):
+        """Write translated content to file and update status.
+
+        Args:
+            target_path: Path to the target SRT file.
+            result: Translated SRT content string.
+        """
         try:
             with open(target_path, "w", encoding="utf-8") as f:
                 f.write(result)
@@ -209,6 +238,11 @@ class TranslateForm(QMainWindow):
             self.go_button.setEnabled(True)
 
     def _on_translation_error(self, error_msg):
+        """Handle translation error.
+
+        Args:
+            error_msg: Error message string.
+        """
         QMessageBox.critical(self, "Translation Error", f"Translation failed:\n{error_msg}")
         self.status_label.setText("Translation failed.")
         self.status_label.setStyleSheet("color: red;")

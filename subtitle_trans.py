@@ -17,6 +17,14 @@ class Subtitle:
 
 
 def parse_srt(subtitles: str) -> list[Subtitle]:
+    """Parse raw SRT text into a list of Subtitle objects.
+
+    Args:
+        subtitles: Raw SRT file content as a string.
+
+    Returns:
+        List of parsed Subtitle instances.
+    """
     blocks = re.split(r"\n\s*\n", subtitles.strip())
     result = []
     for block in blocks:
@@ -34,6 +42,14 @@ def parse_srt(subtitles: str) -> list[Subtitle]:
 
 
 def to_srt(subtitles: list[Subtitle]) -> str:
+    """Convert a list of Subtitle objects back into SRT format.
+
+    Args:
+        subtitles: List of Subtitle instances to serialize.
+
+    Returns:
+        Formatted SRT string.
+    """
     blocks = []
     for sub in subtitles:
         block = f"{sub.id}\n{sub.timestamps}\n{sub.text}"
@@ -42,10 +58,29 @@ def to_srt(subtitles: list[Subtitle]) -> str:
 
 
 def estimate_tokens(text: str) -> int:
+    """Estimate the token count for a piece of text.
+
+    Args:
+        text: Input text to estimate.
+
+    Returns:
+        Approximate number of tokens.
+    """
     return len(text) // 4 + 1
 
 
 def query_max_tokens(config, model_name=None) -> int:
+    """Query the LLM endpoint for the model's maximum context length.
+
+    Falls back to the configured max_tokens value if the query fails.
+
+    Args:
+        config: Parsed configuration file.
+        model_name: Optional model name override.
+
+    Returns:
+        Maximum token count for the model.
+    """
     model_cfg = config_helper.get_model_config(config, model_name)
     ip = model_cfg["host"]
     port = model_cfg["port"]
@@ -66,6 +101,19 @@ def query_max_tokens(config, model_name=None) -> int:
 
 
 def batch_subtitles(subtitles: list[Subtitle], max_tokens: int, config, model_name=None) -> list[list[Subtitle]]:
+    """Split subtitles into batches that fit within the model's token budget.
+
+    Respects min_batch_size and max_batch_size settings from config.
+
+    Args:
+        subtitles: List of Subtitle instances to batch.
+        max_tokens: Maximum token budget per batch.
+        config: Parsed configuration file.
+        model_name: Optional model name override.
+
+    Returns:
+        List of subtitle batches.
+    """
     model_cfg = config_helper.get_model_config(config, model_name)
     available_tokens = max_tokens - 500
     batches = []
@@ -93,6 +141,16 @@ def batch_subtitles(subtitles: list[Subtitle], max_tokens: int, config, model_na
 
 
 def _build_batch_prompt(batch: list[Subtitle], language_from: str, language_to: str) -> str:
+    """Build the user prompt for translating a batch of subtitles.
+
+    Args:
+        batch: List of Subtitle instances to include in the prompt.
+        language_from: Source language name.
+        language_to: Target language name.
+
+    Returns:
+        Formatted prompt string for the LLM.
+    """
     header = f"""\
 Translate each subtitle from {language_from} to {language_to}.
 Each subtitle is numbered followed by ">". Example: "1> Hello world."
@@ -119,6 +177,18 @@ Rules:
 
 
 def translate_batch(batch: list[Subtitle], language_from: str, language_to: str, config, model_name=None) -> str | None:
+    """Send a batch of subtitles to the LLM for translation.
+
+    Args:
+        batch: List of Subtitle instances to translate.
+        language_from: Source language name.
+        language_to: Target language name.
+        config: Parsed configuration file.
+        model_name: Optional model name override.
+
+    Returns:
+        Raw LLM response text on success, or None on failure.
+    """
     model_cfg = config_helper.get_model_config(config, model_name)
     ip = model_cfg["host"]
     port = model_cfg["port"]
@@ -152,6 +222,15 @@ def translate_batch(batch: list[Subtitle], language_from: str, language_to: str,
 
 
 def parse_batch_response(response_text: str, original_batch: list[Subtitle]) -> list[Subtitle] | None:
+    """Parse the LLM response into translated Subtitle objects.
+
+    Args:
+        response_text: Raw response text from the LLM.
+        original_batch: Original batch of Subtitle instances for reference.
+
+    Returns:
+        List of translated Subtitle instances, or None if parsing fails.
+    """
     pattern = r"^(\d+)>\s*(.+?)(?=\n\d+>|\Z)"
     matches = re.findall(pattern, response_text, re.DOTALL | re.MULTILINE)
 
@@ -178,6 +257,20 @@ def parse_batch_response(response_text: str, original_batch: list[Subtitle]) -> 
 
 
 def translate_single(sub: Subtitle, language_from: str, language_to: str, config, model_name=None) -> Subtitle:
+    """Translate a single subtitle via the LLM.
+
+    Used as a fallback when batch translation fails.
+
+    Args:
+        sub: The Subtitle instance to translate.
+        language_from: Source language name.
+        language_to: Target language name.
+        config: Parsed configuration file.
+        model_name: Optional model name override.
+
+    Returns:
+        Translated Subtitle on success, or the original Subtitle unchanged on failure.
+    """
     model_cfg = config_helper.get_model_config(config, model_name)
     ip = model_cfg["host"]
     port = model_cfg["port"]
@@ -212,6 +305,21 @@ def translate_single(sub: Subtitle, language_from: str, language_to: str, config
 
 
 def translate_subtitles(subtitles, language_from, language_to, config, model_name=None):
+    """Orchestrate the full subtitle translation pipeline.
+
+    Parses SRT, batches subtitles, translates each batch via the LLM with
+    fallback to individual translation, and returns the translated SRT string.
+
+    Args:
+        subtitles: Raw SRT file content as a string.
+        language_from: Source language name.
+        language_to: Target language name.
+        config: Parsed configuration file.
+        model_name: Optional model name override.
+
+    Returns:
+        Translated SRT content as a string.
+    """
     all_subs = parse_srt(subtitles)
     if not all_subs:
         return subtitles

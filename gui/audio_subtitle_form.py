@@ -35,12 +35,20 @@ class ExtractWorker(QThread):
     error = pyqtSignal(str)
 
     def __init__(self, video_path, streams, output_dir):
+        """Initialize the extraction worker thread.
+
+        Args:
+            video_path: Path to the source video file.
+            streams: List of audio stream dicts to extract.
+            output_dir: Directory to save extracted audio files.
+        """
         super().__init__()
         self.video_path = video_path
         self.streams = streams
         self.output_dir = output_dir
 
     def run(self):
+        """Extract each audio stream and emit progress/finished/error signals."""
         extracted = []
         for s in self.streams:
             lang = s["language"]
@@ -60,12 +68,20 @@ class TranscribeWorker(QThread):
     error = pyqtSignal(str)
 
     def __init__(self, audio_path, language_name, output_path):
+        """Initialize the transcription worker thread.
+
+        Args:
+            audio_path: Path to the WAV audio file to transcribe.
+            language_name: Language name for Whisper transcription.
+            output_path: Path where the generated SRT file will be saved.
+        """
         super().__init__()
         self.audio_path = audio_path
         self.language_name = language_name
         self.output_path = output_path
 
     def run(self):
+        """Transcribe audio with Whisper and emit progress/finished/error signals."""
         try:
             self.progress.emit(f"Transcribing with Whisper (large model)...")
             segments = transcribe_audio(self.audio_path, self.language_name)
@@ -80,6 +96,7 @@ class TranscribeWorker(QThread):
 
 class AudioSubtitleForm(QMainWindow):
     def __init__(self):
+        """Initialize the main audio extraction and subtitle creation window."""
         super().__init__()
         self.extract_worker = None
         self.transcribe_worker = None
@@ -90,9 +107,11 @@ class AudioSubtitleForm(QMainWindow):
         self._init_ui()
 
     def _project_root(self):
+        """Return the absolute path to the project root directory."""
         return os.path.join(os.path.dirname(__file__), "..")
 
     def _load_language_data(self):
+        """Load ISO 639 and Whisper language data from CSV files."""
         data_dir = os.path.join(self._project_root(), "data")
         try:
             self.iso639_data = load_iso639_data(data_dir)
@@ -101,6 +120,7 @@ class AudioSubtitleForm(QMainWindow):
             pass
 
     def _init_ui(self):
+        """Build the main window layout with extract and transcribe groups."""
         self.setWindowTitle("Audio Extract & Subtitle Creator")
         self.setMinimumSize(600, 520)
 
@@ -119,12 +139,18 @@ class AudioSubtitleForm(QMainWindow):
         splitter.setStretchFactor(1, 2)
 
     def _init_menu(self):
+        """Create the menu bar with File > Exit action."""
         menu_bar = self.menuBar()
         file_menu = menu_bar.addMenu("File")
         exit_action = file_menu.addAction("Exit")
         exit_action.triggered.connect(self.close)
 
     def _build_extract_group(self):
+        """Build the 'Extract Audio from Video' group box with all controls.
+
+        Returns:
+            The constructed QGroupBox widget.
+        """
         group = QGroupBox("Extract Audio from Video")
         layout = QVBoxLayout(group)
 
@@ -189,6 +215,11 @@ class AudioSubtitleForm(QMainWindow):
         return group
 
     def _build_transcribe_group(self):
+        """Build the 'Transcribe Audio to SRT' group box with all controls.
+
+        Returns:
+            The constructed QGroupBox widget.
+        """
         group = QGroupBox("Transcribe Audio to SRT")
         layout = QVBoxLayout(group)
 
@@ -226,6 +257,7 @@ class AudioSubtitleForm(QMainWindow):
         return group
 
     def _browse_video(self):
+        """Open a file dialog to select a video file."""
         path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Video File",
@@ -238,11 +270,13 @@ class AudioSubtitleForm(QMainWindow):
                 self.output_dir_edit.setText(os.path.dirname(path))
 
     def _browse_output_dir(self):
+        """Open a directory dialog to select the output directory."""
         path = QFileDialog.getExistingDirectory(self, "Select Output Directory")
         if path:
             self.output_dir_edit.setText(path)
 
     def _browse_audio(self):
+        """Open a file dialog to select a WAV audio file."""
         path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Audio File",
@@ -253,6 +287,7 @@ class AudioSubtitleForm(QMainWindow):
             self.audio_edit.setText(path)
 
     def _on_detect(self):
+        """Detect audio streams in the selected video file and populate the table."""
         video_path = self.video_edit.text().strip()
         if not video_path:
             QMessageBox.warning(self, "No File", "Please select a video file.")
@@ -303,6 +338,11 @@ class AudioSubtitleForm(QMainWindow):
         self.extract_status.setStyleSheet("color: green;")
 
     def _get_selected_streams(self):
+        """Return a list of stream dicts for checked rows in the streams table.
+
+        Returns:
+            List of selected audio stream dictionaries.
+        """
         selected = []
         for i in range(self.streams_table.rowCount()):
             item = self.streams_table.item(i, 0)
@@ -311,9 +351,11 @@ class AudioSubtitleForm(QMainWindow):
         return selected
 
     def _on_extract_all(self):
+        """Handle 'Extract All' button click."""
         self._start_extraction(self.streams)
 
     def _on_extract_selected(self):
+        """Handle 'Extract Selected' button click."""
         selected = self._get_selected_streams()
         if not selected:
             QMessageBox.warning(self, "No Selection", "No streams selected for extraction.")
@@ -321,6 +363,11 @@ class AudioSubtitleForm(QMainWindow):
         self._start_extraction(selected)
 
     def _start_extraction(self, streams):
+        """Validate output, confirm overwrite, and start the extraction worker.
+
+        Args:
+            streams: List of audio stream dicts to extract.
+        """
         video_path = self.video_edit.text().strip()
         output_dir = self.output_dir_edit.text().strip() or os.path.dirname(video_path)
 
@@ -346,10 +393,21 @@ class AudioSubtitleForm(QMainWindow):
         self.extract_worker.start()
 
     def _on_extract_progress(self, msg):
+        """Update the status label with an extraction progress message.
+
+        Args:
+            msg: Progress message string.
+        """
         self.extract_status.setText(msg)
         self.extract_status.setStyleSheet("color: gray;")
 
     def _on_extract_done(self, count, files):
+        """Handle successful extraction completion.
+
+        Args:
+            count: Number of files extracted.
+            files: List of extracted file paths.
+        """
         self.extract_status.setText(f"Extracted {count} file(s) successfully.")
         self.extract_status.setStyleSheet("color: green;")
         self.extract_all_button.setEnabled(True)
@@ -360,6 +418,11 @@ class AudioSubtitleForm(QMainWindow):
             self.audio_edit.setText(last)
 
     def _on_extract_error(self, msg):
+        """Handle extraction error.
+
+        Args:
+            msg: Error message string.
+        """
         QMessageBox.critical(self, "Extraction Error", msg)
         self.extract_status.setText("Extraction failed.")
         self.extract_status.setStyleSheet("color: red;")
@@ -368,6 +431,11 @@ class AudioSubtitleForm(QMainWindow):
         self.detect_button.setEnabled(True)
 
     def _on_audio_path_changed(self, path):
+        """Validate the audio path and update language detection.
+
+        Args:
+            path: New audio file path from the text field.
+        """
         path = path.strip()
         self.lang_info_label.setText("")
         self.transcribe_button.setEnabled(False)
@@ -393,6 +461,7 @@ class AudioSubtitleForm(QMainWindow):
         self.transcribe_button.setEnabled(True)
 
     def _on_transcribe(self):
+        """Validate inputs and start the transcription worker thread."""
         audio_path = self.audio_edit.text().strip()
         if not audio_path or not os.path.isfile(audio_path):
             QMessageBox.warning(self, "File Not Found", f"Audio file does not exist:\n{audio_path}")
@@ -428,15 +497,30 @@ class AudioSubtitleForm(QMainWindow):
         self.transcribe_worker.start()
 
     def _on_transcribe_progress(self, msg):
+        """Update the status label with a transcription progress message.
+
+        Args:
+            msg: Progress message string.
+        """
         self.transcribe_status.setText(msg)
         self.transcribe_status.setStyleSheet("color: gray;")
 
     def _on_transcribe_done(self, output_path):
+        """Handle successful transcription completion.
+
+        Args:
+            output_path: Path to the generated SRT file.
+        """
         self.transcribe_status.setText(f"SRT saved to {output_path}")
         self.transcribe_status.setStyleSheet("color: green;")
         self.transcribe_button.setEnabled(True)
 
     def _on_transcribe_error(self, msg):
+        """Handle transcription error.
+
+        Args:
+            msg: Error message string.
+        """
         QMessageBox.critical(self, "Transcription Error", f"Transcription failed:\n{msg}")
         self.transcribe_status.setText("Transcription failed.")
         self.transcribe_status.setStyleSheet("color: red;")

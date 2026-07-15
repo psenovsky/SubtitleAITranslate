@@ -19,6 +19,13 @@ import config_helper
 
 class ConfigForm(QDialog):
     def __init__(self, config, config_path, parent=None):
+        """Initialize the settings dialog.
+
+        Args:
+            config: Parsed configuration file.
+            config_path: Path to the configuration file on disk.
+            parent: Optional parent widget.
+        """
         super().__init__(parent)
         self.config = config
         self.config_path = config_path
@@ -29,6 +36,7 @@ class ConfigForm(QDialog):
         self._load_fields()
 
     def _init_ui(self):
+        """Build the settings dialog layout with AI Models and General groups."""
         layout = QVBoxLayout(self)
 
         model_group = QGroupBox("AI Models")
@@ -102,6 +110,7 @@ class ConfigForm(QDialog):
         layout.addLayout(button_row)
 
     def _load_models(self):
+        """Populate the model combo box from config and select the active model."""
         self.model_combo.clear()
         models = config_helper.list_models(self.config)
         self.model_combo.addItems(models)
@@ -111,6 +120,11 @@ class ConfigForm(QDialog):
             self.model_combo.setCurrentIndex(idx)
 
     def _on_model_selected(self, model_name):
+        """Load the selected model's settings into the form fields.
+
+        Args:
+            model_name: Name of the selected model.
+        """
         if not model_name:
             return
         model_cfg = config_helper.get_model_config(self.config, model_name)
@@ -123,6 +137,7 @@ class ConfigForm(QDialog):
         self.active_check.setChecked(model_name == config_helper.get_active_model(self.config))
 
     def _on_add_model(self):
+        """Prompt for a new model name and add it with default settings."""
         new_name, ok = QInputDialog.getText(self, "Add Model", "Enter new model name:")
         if ok and new_name:
             settings = {
@@ -140,6 +155,7 @@ class ConfigForm(QDialog):
                 QMessageBox.warning(self, "Error", f"Model '{new_name}' already exists.")
 
     def _on_remove_model(self):
+        """Prompt for confirmation and remove the selected model."""
         model_name = self.model_combo.currentText()
         if not model_name:
             return
@@ -157,6 +173,7 @@ class ConfigForm(QDialog):
                 QMessageBox.warning(self, "Error", f"Could not remove model '{model_name}'.")
 
     def _on_rename_model(self):
+        """Prompt for a new name and rename the selected model."""
         old_name = self.model_combo.currentText()
         if not old_name:
             return
@@ -169,9 +186,15 @@ class ConfigForm(QDialog):
                 QMessageBox.warning(self, "Error", f"Could not rename model to '{new_name}'.")
 
     def _load_fields(self):
+        """Load general settings into the form fields."""
         self.version_edit.setText(self.config.get("general", "version", fallback=""))
 
     def _validate(self):
+        """Validate all form fields and highlight invalid ones.
+
+        Returns:
+            List of error message strings. Empty if all fields are valid.
+        """
         errors = []
 
         model_name = self.model_combo.currentText()
@@ -266,6 +289,7 @@ class ConfigForm(QDialog):
         return errors
 
     def _on_save(self):
+        """Validate, save settings to config file, and close the dialog."""
         errors = self._validate()
         if errors:
             QMessageBox.warning(self, "Validation Error", "\n".join(errors))

@@ -14,6 +14,7 @@ from whisper_transcribe import (
 
 
 def main():
+    """CLI entry point for transcribing audio files to SRT subtitles using Whisper."""
     config = configparser.ConfigParser()
     config.read("config.ini")
     config_helper.migrate_old_config(config)

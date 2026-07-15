@@ -1,4 +1,5 @@
 def main():
+    """Entry point for the subtitleaitranslate application."""
     print("Hello from subtitleaitranslate!")
 
 
