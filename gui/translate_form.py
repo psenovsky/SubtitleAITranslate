@@ -73,20 +73,26 @@ class TranslateForm(QMainWindow):
     def _init_ui(self):
         """Build the main translation form layout."""
         self.setWindowTitle("Subtitle AI Translate")
-        self.setMinimumSize(500, 220)
+        self.setMinimumSize(520, 240)
 
         self._init_menu()
 
         central = QWidget()
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
+        layout.setContentsMargins(16, 12, 16, 12)
+        layout.setSpacing(10)
 
         form = QFormLayout()
+        form.setSpacing(8)
 
         self.source_edit = QLineEdit()
+        self.source_edit.setPlaceholderText("Path to .srt file to translate")
         source_row = QHBoxLayout()
+        source_row.setSpacing(6)
         source_row.addWidget(self.source_edit)
         browse_source = QPushButton("Browse...")
+        browse_source.setToolTip("Select source subtitle file")
         browse_source.clicked.connect(self._browse_source)
         source_row.addWidget(browse_source)
         source_widget = QWidget()
@@ -94,9 +100,12 @@ class TranslateForm(QMainWindow):
         form.addRow("Source subtitle file:", source_widget)
 
         self.target_edit = QLineEdit()
+        self.target_edit.setPlaceholderText("Path for translated output file")
         target_row = QHBoxLayout()
+        target_row.setSpacing(6)
         target_row.addWidget(self.target_edit)
         browse_target = QPushButton("Browse...")
+        browse_target.setToolTip("Select target output file")
         browse_target.clicked.connect(self._browse_target)
         target_row.addWidget(browse_target)
         target_widget = QWidget()
@@ -104,9 +113,11 @@ class TranslateForm(QMainWindow):
         form.addRow("Target file:", target_widget)
 
         self.source_lang_edit = QLineEdit("english")
+        self.source_lang_edit.setPlaceholderText("e.g. english")
         form.addRow("Source language:", self.source_lang_edit)
 
         self.target_lang_edit = QLineEdit("czech")
+        self.target_lang_edit.setPlaceholderText("e.g. czech")
         form.addRow("Target language:", self.target_lang_edit)
 
         layout.addLayout(form)
@@ -116,10 +127,11 @@ class TranslateForm(QMainWindow):
         self.go_button = QPushButton("GO")
         self.go_button.setMinimumWidth(100)
         self.go_button.setMinimumHeight(36)
-        font = self.go_button.font()
-        font.setBold(True)
-        font.setPointSize(font.pointSize() + 2)
-        self.go_button.setFont(font)
+        self.go_button.setStyleSheet(
+            "QPushButton { font-weight: bold; font-size: 14px; }"
+            "QPushButton:disabled { color: gray; }"
+        )
+        self.go_button.setToolTip("Start translation")
         self.go_button.clicked.connect(self._on_go)
         button_row.addWidget(self.go_button)
         button_row.addStretch()

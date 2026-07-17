@@ -1,3 +1,4 @@
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -38,50 +39,66 @@ class ConfigForm(QDialog):
     def _init_ui(self):
         """Build the settings dialog layout with AI Models and General groups."""
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 12, 16, 12)
+        layout.setSpacing(12)
 
         model_group = QGroupBox("AI Models")
         model_layout = QVBoxLayout()
+        model_layout.setSpacing(8)
 
         model_select_row = QHBoxLayout()
+        model_select_row.setSpacing(6)
         self.model_combo = QComboBox()
+        self.model_combo.setToolTip("Select a model to edit its settings")
         self.model_combo.currentTextChanged.connect(self._on_model_selected)
         model_select_row.addWidget(self.model_combo)
 
         self.add_model_button = QPushButton("Add")
+        self.add_model_button.setToolTip("Add a new model configuration")
         self.add_model_button.clicked.connect(self._on_add_model)
         model_select_row.addWidget(self.add_model_button)
 
         self.remove_model_button = QPushButton("Remove")
+        self.remove_model_button.setToolTip("Remove the selected model")
         self.remove_model_button.clicked.connect(self._on_remove_model)
         model_select_row.addWidget(self.remove_model_button)
 
         self.rename_model_button = QPushButton("Rename")
+        self.rename_model_button.setToolTip("Rename the selected model")
         self.rename_model_button.clicked.connect(self._on_rename_model)
         model_select_row.addWidget(self.rename_model_button)
 
         model_layout.addLayout(model_select_row)
 
         ai_form = QFormLayout()
+        ai_form.setSpacing(6)
 
         self.host_edit = QLineEdit()
+        self.host_edit.setPlaceholderText("e.g. localhost")
         ai_form.addRow("Host:", self.host_edit)
 
         self.port_edit = QLineEdit()
+        self.port_edit.setPlaceholderText("e.g. 1234")
         ai_form.addRow("Port:", self.port_edit)
 
         self.model_edit = QLineEdit()
+        self.model_edit.setPlaceholderText("e.g. qwen2.5")
         ai_form.addRow("Model:", self.model_edit)
 
         self.max_tokens_edit = QLineEdit()
+        self.max_tokens_edit.setPlaceholderText("e.g. 200000")
         ai_form.addRow("Max tokens:", self.max_tokens_edit)
 
         self.min_batch_size_edit = QLineEdit()
+        self.min_batch_size_edit.setPlaceholderText("e.g. 3")
         ai_form.addRow("Min batch size:", self.min_batch_size_edit)
 
         self.max_batch_size_edit = QLineEdit()
+        self.max_batch_size_edit.setPlaceholderText("e.g. 30")
         ai_form.addRow("Max batch size:", self.max_batch_size_edit)
 
         self.active_check = QCheckBox("Set as active model")
+        self.active_check.setToolTip("Mark this model as the default for translations")
         ai_form.addRow("", self.active_check)
 
         model_layout.addLayout(ai_form)
@@ -91,23 +108,34 @@ class ConfigForm(QDialog):
 
         general_group = QGroupBox("General")
         general_form = QFormLayout()
+        general_form.setSpacing(6)
 
         self.version_edit = QLineEdit()
+        self.version_edit.setPlaceholderText("e.g. 1.0")
         general_form.addRow("Version:", self.version_edit)
 
         general_group.setLayout(general_form)
         layout.addWidget(general_group)
 
-        button_row = QVBoxLayout()
+        button_row = QHBoxLayout()
+        button_row.setSpacing(8)
+        button_row.addStretch()
         self.save_button = QPushButton("Save")
+        self.save_button.setMinimumWidth(80)
+        self.save_button.setToolTip("Save settings and close")
         self.save_button.clicked.connect(self._on_save)
         button_row.addWidget(self.save_button)
 
-        self.status_label = QLabel("")
-        self.status_label.setAlignment(self.status_label.alignment())
-        button_row.addWidget(self.status_label)
-
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.setMinimumWidth(80)
+        self.cancel_button.setToolTip("Discard changes and close")
+        self.cancel_button.clicked.connect(self.reject)
+        button_row.addWidget(self.cancel_button)
         layout.addLayout(button_row)
+
+        self.status_label = QLabel("")
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.status_label)
 
     def _load_models(self):
         """Populate the model combo box from config and select the active model."""

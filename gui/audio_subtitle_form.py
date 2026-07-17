@@ -122,13 +122,14 @@ class AudioSubtitleForm(QMainWindow):
     def _init_ui(self):
         """Build the main window layout with extract and transcribe groups."""
         self.setWindowTitle("Audio Extract & Subtitle Creator")
-        self.setMinimumSize(600, 520)
+        self.setMinimumSize(620, 540)
 
         self._init_menu()
 
         central = QWidget()
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
+        layout.setContentsMargins(12, 8, 12, 8)
 
         splitter = QSplitter(Qt.Orientation.Vertical)
         layout.addWidget(splitter)
@@ -153,13 +154,18 @@ class AudioSubtitleForm(QMainWindow):
         """
         group = QGroupBox("Extract Audio from Video")
         layout = QVBoxLayout(group)
+        layout.setSpacing(8)
 
         form = QFormLayout()
+        form.setSpacing(6)
 
         self.video_edit = QLineEdit()
+        self.video_edit.setPlaceholderText("Path to video file (.mkv, .mp4, etc.)")
         video_row = QHBoxLayout()
+        video_row.setSpacing(6)
         video_row.addWidget(self.video_edit)
         browse_video = QPushButton("Browse...")
+        browse_video.setToolTip("Select video file")
         browse_video.clicked.connect(self._browse_video)
         video_row.addWidget(browse_video)
         video_widget = QWidget()
@@ -167,9 +173,12 @@ class AudioSubtitleForm(QMainWindow):
         form.addRow("Video file:", video_widget)
 
         self.output_dir_edit = QLineEdit()
+        self.output_dir_edit.setPlaceholderText("Output directory (defaults to video location)")
         output_row = QHBoxLayout()
+        output_row.setSpacing(6)
         output_row.addWidget(self.output_dir_edit)
         browse_output = QPushButton("Browse...")
+        browse_output.setToolTip("Select output directory")
         browse_output.clicked.connect(self._browse_output_dir)
         output_row.addWidget(browse_output)
         output_widget = QWidget()
@@ -179,7 +188,9 @@ class AudioSubtitleForm(QMainWindow):
         layout.addLayout(form)
 
         btn_row = QHBoxLayout()
+        btn_row.setSpacing(6)
         self.detect_button = QPushButton("Detect Streams")
+        self.detect_button.setToolTip("Scan video for audio streams")
         self.detect_button.clicked.connect(self._on_detect)
         btn_row.addWidget(self.detect_button)
         btn_row.addStretch()
@@ -197,11 +208,14 @@ class AudioSubtitleForm(QMainWindow):
         layout.addWidget(self.streams_table)
 
         extract_row = QHBoxLayout()
+        extract_row.setSpacing(6)
         self.extract_all_button = QPushButton("Extract All")
+        self.extract_all_button.setToolTip("Extract all detected audio streams")
         self.extract_all_button.setEnabled(False)
         self.extract_all_button.clicked.connect(self._on_extract_all)
         extract_row.addWidget(self.extract_all_button)
         self.extract_selected_button = QPushButton("Extract Selected")
+        self.extract_selected_button.setToolTip("Extract only checked streams")
         self.extract_selected_button.setEnabled(False)
         self.extract_selected_button.clicked.connect(self._on_extract_selected)
         extract_row.addWidget(self.extract_selected_button)
@@ -222,13 +236,18 @@ class AudioSubtitleForm(QMainWindow):
         """
         group = QGroupBox("Transcribe Audio to SRT")
         layout = QVBoxLayout(group)
+        layout.setSpacing(8)
 
         form = QFormLayout()
+        form.setSpacing(6)
 
         self.audio_edit = QLineEdit()
+        self.audio_edit.setPlaceholderText("Path to WAV audio file")
         audio_row = QHBoxLayout()
+        audio_row.setSpacing(6)
         audio_row.addWidget(self.audio_edit)
         browse_audio = QPushButton("Browse...")
+        browse_audio.setToolTip("Select WAV audio file")
         browse_audio.clicked.connect(self._browse_audio)
         audio_row.addWidget(browse_audio)
         audio_widget = QWidget()
@@ -243,7 +262,9 @@ class AudioSubtitleForm(QMainWindow):
         layout.addLayout(form)
 
         btn_row = QHBoxLayout()
+        btn_row.setSpacing(6)
         self.transcribe_button = QPushButton("Transcribe")
+        self.transcribe_button.setToolTip("Transcribe audio to SRT subtitles")
         self.transcribe_button.setEnabled(False)
         self.transcribe_button.clicked.connect(self._on_transcribe)
         btn_row.addWidget(self.transcribe_button)
