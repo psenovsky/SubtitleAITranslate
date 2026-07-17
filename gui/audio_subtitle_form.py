@@ -2,6 +2,7 @@ import os
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
+    QComboBox,
     QFileDialog,
     QFormLayout,
     QGroupBox,
@@ -118,6 +119,16 @@ class AudioSubtitleForm(QMainWindow):
             self.whisper_supported = load_whisper_support(data_dir)
         except Exception:
             pass
+        self._whisper_languages = self._build_whisper_languages()
+
+    def _build_whisper_languages(self):
+        """Build sorted list of (name, code_639_2) for Whisper-supported languages."""
+        languages = []
+        for code_639_2, (code_639_1, name) in self.iso639_data.items():
+            if code_639_1 in self.whisper_supported:
+                languages.append((name, code_639_2))
+        languages.sort(key=lambda x: x[0].lower())
+        return languages
 
     def _init_ui(self):
         """Build the main window layout with extract and transcribe groups."""
@@ -197,9 +208,9 @@ class AudioSubtitleForm(QMainWindow):
         layout.addLayout(btn_row)
 
         self.streams_table = QTableWidget()
-        self.streams_table.setColumnCount(5)
+        self.streams_table.setColumnCount(6)
         self.streams_table.setHorizontalHeaderLabels(
-            ["Language", "Codec", "Channels", "Duration", "Bitrate"]
+            ["Language", "Override", "Codec", "Channels", "Duration", "Bitrate"]
         )
         self.streams_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.streams_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -344,14 +355,26 @@ class AudioSubtitleForm(QMainWindow):
         self.streams_table.setRowCount(len(streams))
         for i, s in enumerate(streams):
             self.streams_table.setItem(i, 0, QTableWidgetItem(s["language"]))
-            self.streams_table.setItem(i, 1, QTableWidgetItem(s["codec_name"]))
-            self.streams_table.setItem(i, 2, QTableWidgetItem(str(s["channels"])))
+            self.streams_table.item(i, 0).setCheckState(Qt.CheckState.Checked)
+
+            override_combo = QComboBox()
+            override_combo.addItem("— use detected —", "")
+            detected_code2 = s["language"]
+            detected_index = 0
+            for idx, (name, code2) in enumerate(self._whisper_languages, 1):
+                override_combo.addItem(f"{name} ({code2})", code2)
+                if code2 == detected_code2:
+                    detected_index = idx
+            override_combo.setCurrentIndex(detected_index)
+            self.streams_table.setCellWidget(i, 1, override_combo)
+
+            self.streams_table.setItem(i, 2, QTableWidgetItem(s["codec_name"]))
+            self.streams_table.setItem(i, 3, QTableWidgetItem(str(s["channels"])))
             duration = s["duration"]
             if duration != "N/A" and "." in duration:
                 duration = duration.split(".")[0]
-            self.streams_table.setItem(i, 3, QTableWidgetItem(duration))
-            self.streams_table.setItem(i, 4, QTableWidgetItem(str(s["bit_rate"])))
-            self.streams_table.item(i, 0).setCheckState(Qt.CheckState.Checked)
+            self.streams_table.setItem(i, 4, QTableWidgetItem(duration))
+            self.streams_table.setItem(i, 5, QTableWidgetItem(str(s["bit_rate"])))
 
         self.extract_all_button.setEnabled(True)
         self.extract_selected_button.setEnabled(True)
@@ -359,7 +382,7 @@ class AudioSubtitleForm(QMainWindow):
         self.extract_status.setStyleSheet("color: green;")
 
     def _get_selected_streams(self):
-        """Return a list of stream dicts for checked rows in the streams table.
+        """Return a list of stream dicts for checked rows, with language overrides applied.
 
         Returns:
             List of selected audio stream dictionaries.
@@ -368,7 +391,11 @@ class AudioSubtitleForm(QMainWindow):
         for i in range(self.streams_table.rowCount()):
             item = self.streams_table.item(i, 0)
             if item and item.checkState() == Qt.CheckState.Checked:
-                selected.append(self.streams[i])
+                stream = dict(self.streams[i])
+                combo = self.streams_table.cellWidget(i, 1)
+                if combo and combo.currentData():
+                    stream["language"] = combo.currentData()
+                selected.append(stream)
         return selected
 
     def _on_extract_all(self):
