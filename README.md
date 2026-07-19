@@ -12,8 +12,9 @@ The app is configured using a simple ini file. The file is located in the same f
 
 ```
 [general]
-version = 0.0.2
+version = 0.0.3
 active_model = default
+whisper_model = turbo
 
 [model.default]
 host = 127.0.0.1
@@ -28,6 +29,7 @@ Each AI model is defined in its own section named `[model.<name>]`. The `[genera
 
 - `version` — informational, version of the app used in the CLI help output
 - `active_model` — name of the model to use by default
+- `whisper_model` — Whisper model size for audio transcription (`small`, `medium`, `turbo`, `large`; default: `turbo`)
 
 The configuration directives for each model section are:
 
@@ -42,8 +44,9 @@ You can configure multiple models and switch between them. For example:
 
 ```
 [general]
-version = 0.0.2
+version = 0.0.3
 active_model = default
+whisper_model = turbo
 
 [model.default]
 host = 127.0.0.1
@@ -111,7 +114,7 @@ The GUI provides a form where you can:
 
 The translation runs in the background so the window stays responsive. A status message at the bottom indicates progress and completion.
 
-The settings dialog (**File > Settings**) allows you to manage multiple AI models — add, remove, rename them, and select which one is active.
+The settings dialog (**File > Settings**) allows you to manage multiple AI models — add, remove, rename them, and select which one is active. You can also configure the Whisper model size for audio transcription in the General section.
 
 ## Audio Extraction
 
@@ -174,6 +177,28 @@ Transcribes audio files to SRT subtitles using OpenAI Whisper. The language is a
 ### Requirements
 
 - `openai-whisper` package (installed via `uv sync`)
+
+### GPU Acceleration
+
+Whisper automatically uses the best available device for inference:
+- **CUDA** (NVIDIA GPU) — used when available
+- **MPS** (Apple Silicon GPU) — used on macOS when CUDA is not available
+- **CPU** — fallback when no GPU is available
+
+The device is detected automatically and displayed during transcription.
+
+### Whisper Model
+
+The Whisper model size is configurable in `config.ini` under `[general]`:
+
+- `small` — faster, lower accuracy
+- `medium` — balanced
+- `turbo` — fast and accurate (default)
+- `large` — highest accuracy, slowest
+
+You can also change the model in the GUI settings dialog (**File > Settings > General > Whisper model**).
+
+First-time use of a model will download it automatically (~1.5 GB for turbo, ~3 GB for large).
 
 ### Usage
 
