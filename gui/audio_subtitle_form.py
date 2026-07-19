@@ -87,8 +87,12 @@ class TranscribeWorker(QThread):
         """Transcribe audio with Whisper and emit progress/finished/error signals."""
         try:
             model_size = self.config.get("general", "whisper_model", fallback="turbo")
-            self.progress.emit(f"Transcribing with Whisper ({model_size} model)...")
-            segments = transcribe_audio(self.audio_path, self.language_name, model_size=model_size)
+            segments = transcribe_audio(
+                self.audio_path,
+                self.language_name,
+                model_size=model_size,
+                progress_callback=self.progress.emit,
+            )
             self.progress.emit(f"Generated {len(segments)} subtitle segments")
             srt_content = segments_to_srt(segments)
             with open(self.output_path, "w", encoding="utf-8") as f:

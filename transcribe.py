@@ -2,6 +2,8 @@ import argparse
 import configparser
 import os
 
+from tqdm import tqdm
+
 import lib.config_helper as config_helper
 from lib.whisper_transcribe import (
     load_iso639_data,
@@ -68,7 +70,10 @@ def main():
 
     try:
         model_size = config.get("general", "whisper_model", fallback="turbo")
-        segments = transcribe_audio(args.file, language_name, model_size=model_size)
+        print("Transcribing audio trace...")
+        with tqdm(desc="Transcribing", unit="segment") as pbar:
+            segments = transcribe_audio(args.file, language_name, model_size=model_size, verbose=True)
+            pbar.update(len(segments))
     except Exception as e:
         print(f"Error during transcription: {e}")
         exit(1)

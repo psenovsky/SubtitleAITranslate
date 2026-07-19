@@ -106,13 +106,15 @@ def _get_device():
     return "cpu"
 
 
-def transcribe_audio(audio_path, language_name, model_size="turbo"):
+def transcribe_audio(audio_path, language_name, model_size="turbo", verbose=False, progress_callback=None):
     """Transcribe audio file using Whisper model.
 
     Args:
         audio_path: Path to the WAV audio file
         language_name: Language name (e.g., 'English') for Whisper
         model_size: Whisper model size ('small', 'medium', 'turbo', 'large')
+        verbose: If True, print Whisper progress to stdout
+        progress_callback: Optional callable that receives status strings
 
     Returns:
         List of segments, each with 'start', 'end', 'text' keys
@@ -120,10 +122,16 @@ def transcribe_audio(audio_path, language_name, model_size="turbo"):
     import whisper
 
     device = _get_device()
+
+    if progress_callback:
+        progress_callback(f"Loading Whisper {model_size} model on {device}...")
     print(f"Whisper using device: {device}, model: {model_size}")
 
     model = whisper.load_model(model_size, device=device)
-    result = model.transcribe(audio_path, language=language_name)
+
+    if progress_callback:
+        progress_callback("Transcribing audio...")
+    result = model.transcribe(audio_path, language=language_name, verbose=verbose)
 
     return result["segments"]
 
