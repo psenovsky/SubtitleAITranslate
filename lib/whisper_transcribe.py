@@ -95,6 +95,17 @@ def format_timestamp(seconds):
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 
+def _get_device():
+    """Detect the best available device for Whisper inference."""
+    import torch
+
+    if torch.cuda.is_available():
+        return "cuda"
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 def transcribe_audio(audio_path, language_name):
     """Transcribe audio file using Whisper large model.
 
@@ -107,7 +118,10 @@ def transcribe_audio(audio_path, language_name):
     """
     import whisper
 
-    model = whisper.load_model("large")
+    device = _get_device()
+    print(f"Whisper using device: {device}")
+
+    model = whisper.load_model("large", device=device)
     result = model.transcribe(audio_path, language=language_name)
 
     return result["segments"]
