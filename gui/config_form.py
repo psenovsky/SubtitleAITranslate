@@ -114,6 +114,11 @@ class ConfigForm(QDialog):
         self.version_edit.setPlaceholderText("e.g. 1.0")
         general_form.addRow("Version:", self.version_edit)
 
+        self.whisper_model_combo = QComboBox()
+        self.whisper_model_combo.addItems(["small", "medium", "turbo", "large"])
+        self.whisper_model_combo.setToolTip("Whisper model size for audio transcription")
+        general_form.addRow("Whisper model:", self.whisper_model_combo)
+
         general_group.setLayout(general_form)
         layout.addWidget(general_group)
 
@@ -216,6 +221,10 @@ class ConfigForm(QDialog):
     def _load_fields(self):
         """Load general settings into the form fields."""
         self.version_edit.setText(self.config.get("general", "version", fallback=""))
+        whisper_model = self.config.get("general", "whisper_model", fallback="turbo")
+        idx = self.whisper_model_combo.findText(whisper_model)
+        if idx >= 0:
+            self.whisper_model_combo.setCurrentIndex(idx)
 
     def _validate(self):
         """Validate all form fields and highlight invalid ones.
@@ -345,6 +354,7 @@ class ConfigForm(QDialog):
         if not self.config.has_section("general"):
             self.config.add_section("general")
         self.config.set("general", "version", self.version_edit.text().strip())
+        self.config.set("general", "whisper_model", self.whisper_model_combo.currentText())
 
         with open(self.config_path, "w") as f:
             self.config.write(f)

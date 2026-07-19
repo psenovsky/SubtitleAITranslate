@@ -167,7 +167,7 @@ class TranslateForm(QMainWindow):
     def _on_audio_subtitle(self):
         """Open or raise the audio extraction and subtitle creation window."""
         if self.audio_window is None:
-            self.audio_window = AudioSubtitleForm()
+            self.audio_window = AudioSubtitleForm(self.config)
         self.audio_window.show()
         self.audio_window.raise_()
         self.audio_window.activateWindow()

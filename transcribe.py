@@ -62,11 +62,13 @@ def main():
         print("Supported languages:", ", ".join(sorted(whisper_supported)))
         exit(1)
 
-    print(f"\nTranscribing with Whisper (large model)...")
+    print(f"\nTranscribing with Whisper...")
     print(f"  Language: {language_name}")
+    print(f"  Model: {config.get('general', 'whisper_model', fallback='turbo')}")
 
     try:
-        segments = transcribe_audio(args.file, language_name)
+        model_size = config.get("general", "whisper_model", fallback="turbo")
+        segments = transcribe_audio(args.file, language_name, model_size=model_size)
     except Exception as e:
         print(f"Error during transcription: {e}")
         exit(1)

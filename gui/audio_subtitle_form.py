@@ -68,24 +68,27 @@ class TranscribeWorker(QThread):
     finished = pyqtSignal(str)
     error = pyqtSignal(str)
 
-    def __init__(self, audio_path, language_name, output_path):
+    def __init__(self, audio_path, language_name, output_path, config):
         """Initialize the transcription worker thread.
 
         Args:
             audio_path: Path to the WAV audio file to transcribe.
             language_name: Language name for Whisper transcription.
             output_path: Path where the generated SRT file will be saved.
+            config: Parsed configuration file.
         """
         super().__init__()
         self.audio_path = audio_path
         self.language_name = language_name
         self.output_path = output_path
+        self.config = config
 
     def run(self):
         """Transcribe audio with Whisper and emit progress/finished/error signals."""
         try:
-            self.progress.emit(f"Transcribing with Whisper (large model)...")
-            segments = transcribe_audio(self.audio_path, self.language_name)
+            model_size = self.config.get("general", "whisper_model", fallback="turbo")
+            self.progress.emit(f"Transcribing with Whisper ({model_size} model)...")
+            segments = transcribe_audio(self.audio_path, self.language_name, model_size=model_size)
             self.progress.emit(f"Generated {len(segments)} subtitle segments")
             srt_content = segments_to_srt(segments)
             with open(self.output_path, "w", encoding="utf-8") as f:
@@ -96,9 +99,10 @@ class TranscribeWorker(QThread):
 
 
 class AudioSubtitleForm(QMainWindow):
-    def __init__(self):
+    def __init__(self, config):
         """Initialize the main audio extraction and subtitle creation window."""
         super().__init__()
+        self.config = config
         self.extract_worker = None
         self.transcribe_worker = None
         self.streams = []
@@ -538,7 +542,7 @@ class AudioSubtitleForm(QMainWindow):
         self.transcribe_status.setText("Transcribing...")
         self.transcribe_status.setStyleSheet("color: gray;")
 
-        self.transcribe_worker = TranscribeWorker(audio_path, language_name, output_path)
+        self.transcribe_worker = TranscribeWorker(audio_path, language_name, output_path, self.config)
         self.transcribe_worker.progress.connect(self._on_transcribe_progress)
         self.transcribe_worker.finished.connect(self._on_transcribe_done)
         self.transcribe_worker.error.connect(self._on_transcribe_error)

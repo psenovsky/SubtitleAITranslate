@@ -106,12 +106,13 @@ def _get_device():
     return "cpu"
 
 
-def transcribe_audio(audio_path, language_name):
-    """Transcribe audio file using Whisper large model.
+def transcribe_audio(audio_path, language_name, model_size="turbo"):
+    """Transcribe audio file using Whisper model.
 
     Args:
         audio_path: Path to the WAV audio file
         language_name: Language name (e.g., 'English') for Whisper
+        model_size: Whisper model size ('small', 'medium', 'turbo', 'large')
 
     Returns:
         List of segments, each with 'start', 'end', 'text' keys
@@ -119,9 +120,9 @@ def transcribe_audio(audio_path, language_name):
     import whisper
 
     device = _get_device()
-    print(f"Whisper using device: {device}")
+    print(f"Whisper using device: {device}, model: {model_size}")
 
-    model = whisper.load_model("large", device=device)
+    model = whisper.load_model(model_size, device=device)
     result = model.transcribe(audio_path, language=language_name)
 
     return result["segments"]
